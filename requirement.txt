@@ -1,0 +1,16 @@
+streamlit
+speech_recognition
+gtts
+os
+tempfile
+datetime
+wikipedia
+webbrowser
+smtplib
+time
+base64
+webbrowser
+csv
+facial_emotion_recognition
+cv2
+time
