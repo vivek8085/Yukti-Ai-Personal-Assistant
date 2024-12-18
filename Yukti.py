@@ -1,5 +1,4 @@
 #run this
-
 import streamlit as st
 import speech_recognition as sr
 from gtts import gTTS
@@ -12,6 +11,74 @@ import smtplib
 import time
 import base64
 import webbrowser
+import csv
+from facial_emotion_recognition import EmotionRecognition
+import cv2
+import time
+
+
+st.markdown(
+    """
+    <style>
+    [data-testid="stSidebar"] {
+        background: linear-gradient(90deg, rgba(0, 36, 61, 1) 0%, rgba(0, 128, 255, 0.9) 50%, rgba(0, 212, 255, 1) 100%);
+        color: smoke;
+        animation: pulse 3s infinite;
+        padding: 20px;
+    }
+    @keyframes pulse {
+        0% { background-color: rgba(0, 128, 255, 0.9); }
+        50% { background-color: rgba(0, 212, 255, 1); }
+        100% { background-color: rgba(0, 128, 255, 0.9); }
+    }
+    .emoji {
+        font-size: 3.5rem;
+        margin-right: 10px;
+        animation: bounce 1.5s infinite;
+    }
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    """
+    <style>
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(120deg, #1e3c72, #2a5298, #0f2027);
+        background-size: 400% 400%;
+        animation: gradientShift 10s ease infinite;
+        height: 100vh;
+        padding: 0;
+        margin: 0;
+    }
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    @media (max-width: 768px) {
+        [data-testid="stAppViewContainer"] {
+            background: linear-gradient(120deg, #6a11cb, #2575fc);
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+#########################################################################################################################
+st.sidebar.markdown("""
+- 🏠 **Home**: Chat with Yukti.  
+- 😠😮😐 **Emotion Recognition**: To enable Emotion Recognition mode.  
+""")
+# Main page content
+# st.title("Yukti -An AI Assistant 🤖")
 
 # Choose language: 'en' for English, 'kn' for Kannada, 'hi' for Hindi
 language = st.selectbox("Select Language / भाषा चुनें / ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ:", ["English", "Hindi", "Kannada"])
@@ -36,29 +103,60 @@ def speak(text):
     st.markdown(audio_tag, unsafe_allow_html=True)
     os.unlink(fp.name)
 
-# Sidebar text in all three languages
-with st.sidebar:
-    with st.echo():
-        st.write("This code will print to the sidebar." if lang_code == 'en' else
-                 "यह कोड साइडबार में मुद्रित होगा।" if lang_code == 'hi' else 
-                 "ಈ ಕೋಡ್ ಸೈಡ್ಬಾರ್‌ನಲ್ಲಿ ಮುದ್ರಿತವಾಗುತ್ತದೆ.")
-    with st.spinner("Loading..." if lang_code == 'en' else
-                    "लोड हो रहा है..." if lang_code == 'hi' else 
-                    "ಲೋಡ್ ಆಗುತ್ತಿದೆ..."):
-        time.sleep(5)
-    st.success("Done!" if lang_code == 'en' else "पूर्ण हुआ!" if lang_code == 'hi' else "ಮುಗಿದಿದೆ!")
-
 st.markdown(
     """
     <style>
-    [data-testid="stMain"]{
-        background: rgb(2,0,36);
-background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,98,121,0.8352591036414566) 35%, rgba(0,212,255,1) 100%);
+    .yel-col{
+        color:yellow;
+        font-weight: bold;
+        font-size: 1.0rem;
+        # animation: glow 1.5s infinite;
+        align-content: center;
+    }
+    
+    .pink-subheader {
+        color: pink;
+        font-weight: bold;
+        font-size: 1.5rem;
+        animation: glow 1.5s infinite;
+        align-content: center;
+    }
+    .yellow-subheader {
+        color: yellow;
+        font-weight: bold;
+        font-size: 1.5rem;
+        animation: glow 1.5s infinite;
+    }
+
+    @keyframes glow {
+        0% {
+            text-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ffd700;
+        }
+        50% {
+            text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700, 0 0 30px #ffd700;
+        }
+        100% {
+            text-shadow: 0 0 5px #ffd700, 0 0 10px #ffd700, 0 0 15px #ffd700;
+        }
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+
+
+# st.markdown(
+#     """
+#     <style>
+#     [data-testid="stMain"]{
+#         background: rgb(2,0,36);
+# background: linear-gradient(90deg, rgba(2,0,36,1) 0%, rgba(9,98,121,0.8352591036414566) 35%, rgba(0,212,255,1) 100%);
+#     }
+#     </style>
+#     """,
+#     unsafe_allow_html=True
+# )
 
 # Function to recognize speech
 def takeCommand():
@@ -100,21 +198,30 @@ def sendEmail(to, content):
     server.sendmail('skbhagoji97@gmail.com', to, content)
     server.close()
 
-st.title("AI Assistant - Nayra (Female Version) 🤖" if lang_code == 'en' else "एआई सहायक - नायरा 🤖" if lang_code == 'hi' else "ಎಐ ಸಹಾಯಕ - ನಾಯರಾ 🤖")
+timestamp = datetime.datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
+st.markdown('<div class="yellow-subheader">AI Assistant</div>', unsafe_allow_html=True)
+st.title("Yukti 🤖" if lang_code == 'en' else "युक्ति 🤖" if lang_code == 'hi' else "ಯುಕ್ತಿ 🤖")
 st.image("bot.gif")
 
 def main():
+    if not os.path.exists('chat_log.csv'):
+        with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(['User Input', 'Response', 'Timestamp'])
+
+
     greeting = wishMe()
-    speak(f"{greeting} Hello! How can I make your day better, dear?" if lang_code == 'en' else 
+    speak(f"{greeting} Hello! How can I make your day better ?" if lang_code == 'en' else 
           f"{greeting} मैं आपकी किस प्रकार सहायता कर सकता हूँ?" if lang_code == 'hi' else 
           f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
     
+    # wishMe()
     if 'initialized' not in st.session_state:
         st.session_state.initialized = True
-        greeting = wishMe()
-        speak(f"{greeting} Hello! How can I make your day better, dear?" if lang_code == 'en' else 
-              f"{greeting} मैं आपकी किस प्रकार सहायता कर सकता हूँ?" if lang_code == 'hi' else 
-              f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
+        # greeting = wishMe()
+        # speak(f"{greeting} Hello! How can I make your day better ?" if lang_code == 'en' else 
+            #   f"{greeting} मैं आपकी किस प्रकार सहायता कर सकता हूँ?" if lang_code == 'hi' else 
+            #   f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
 
     if 'listening' not in st.session_state:
         st.session_state.listening = False
@@ -125,10 +232,10 @@ def main():
         if st.button("Start Listening" if lang_code == 'en' else "सुनना प्रारंभ करें" if lang_code == 'hi' else "ಶ್ರವಣ ಪ್ರಾರಂಭಿಸಿ"):
             if 'greeted' not in st.session_state:
                 st.session_state.greeted = True
-                greeting = wishMe()
-                speak(f"{greeting} Hello! How can I make your day better, dear?" if lang_code == 'en' else 
-                      f"{greeting} मैं आपकी किस प्रकार सहायता कर सकती हूँ?" if lang_code == 'hi' else 
-                      f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
+            #     greeting = wishMe()
+            #     speak(f"{greeting} Hello! How can I make your day better?" if lang_code == 'en' else 
+            #           f"{greeting} मैं आपकी किस प्रकार सहायता कर सकती हूँ?" if lang_code == 'hi' else 
+            #           f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
             st.session_state.listening = True
             st.rerun()
     
@@ -155,46 +262,83 @@ def main():
                       'विकिपीडिया में खोज कर रहा हूँ...' if lang_code == 'hi' else 
                       'ವಿಕಿಪೀಡಿಯದಲ್ಲಿ ಹುಡುಕುತ್ತಿದೆ...')
                 query = query.replace("wikipedia", "").replace("विकिपीडिया", "").replace("ವಿಕಿಪೀಡಿಯ", "")
-                results = wikipedia.summary(query, sentences=2)
-                speak("According to Wikipedia" if lang_code == 'en' else 
+                results = wikipedia.summary(query, sentences=1)
+                res=("According to Wikipedia" if lang_code == 'en' else 
                       "विकिपीडिया के अनुसार" if lang_code == 'hi' else 
                       "ವಿಕಿಪೀಡಿಯ ಪ್ರಕಾರ")
                 output.write(results)
                 speak(results)
+                with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([query, res,timestamp])
 
             elif 'open youtube' in query or 'यूट्यूब खोलें' in query or 'ಯುಟ್ಯೂಬ್ ತೆರೆಯಿರಿ' in query:
                 webbrowser.open("https://www.youtube.com/")
-                speak("Opening YouTube" if lang_code == 'en' else 
+                res=("Opening YouTube" if lang_code == 'en' else 
                       "यूट्यूब खोल रहा हूँ" if lang_code == 'hi' else 
                       "ಯೂಟ್ಯೂಬ್ ತೆರೆಯುತ್ತಿದೆ")
+                speak(res)
+                with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([query, res,timestamp])
 
             elif 'open google' in query or 'गूगल खोलें' in query or 'ಗೂಗಲ್ ತೆರೆಯಿರಿ' in query:
                 webbrowser.open("https://google.com")
-                speak("Opening Google" if lang_code == 'en' else 
+                res=("Opening Google" if lang_code == 'en' else 
                       "गूगल खोल रहा हूँ" if lang_code == 'hi' else 
                       "ಗೂಗಲ್ ತೆರೆಯುತ್ತಿದೆ")
+                speak(res)
+                with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([query, res,timestamp])
+
 
             elif 'time' in query or 'समय' in query or 'ಸಮಯ' in query:
                 strTime = datetime.datetime.now().strftime("%H:%M:%S")
-                speak(f"The time is {strTime}" if lang_code == 'en' else 
+                res=(f"The time is {strTime}" if lang_code == 'en' else 
                       f"समय है {strTime}" if lang_code == 'hi' else 
                       f"ಈಗ ಸಮಯ {strTime}")
+                speak(res)
+                with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([query, res,timestamp])
+
 
             elif 'search' in query or 'google' in query or 'खोजें' in query or 'गूगल' in query or 'ಹುಡುಕು' in query or 'ಗೂಗಲ್' in query:
                 search_query = query.replace("search", "").replace("google", "").replace("खोजें", "").replace("गूगल", "").replace("ಹುಡುಕು", "").replace("ಗೂಗಲ್", "").strip()
-                speak(f"Searching Google for {search_query}" if lang_code == 'en' else 
+                res=(f"Searching Google for {search_query}" if lang_code == 'en' else 
                       f"गूगल पर {search_query} खोज रहा हूँ" if lang_code == 'hi' else 
                       f"ಗೂಗಲ್‌ನಲ್ಲಿ {search_query} ಹುಡುಕುತ್ತಿದೆ")
                 search_google(search_query)
                 output.write(f"Searched Google for: {search_query}" if lang_code == 'en' else 
                              f"गूगल पर खोजा गया: {search_query}" if lang_code == 'hi' else 
                              f"ಗೂಗಲ್‌ನಲ್ಲಿ ಹುಡುಕಿದೆ: {search_query}")
+                speak(res)
+                with open('chat_log.csv', 'w', newline='', encoding='utf-8') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([query, res,timestamp])
+
 
             elif 'sleep' in query or 'quit' in query or 'सो जाओ' in query or 'बंद करो' in query or 'ನಿದ್ರೆ' in query or 'ನಿಲ್ಲಿಸಿ' in query:
                 speak('Thank you so much! I’ll be right here when you need me again.' if lang_code == 'en' else 
                       'धन्यवाद! फिर मिलेंगे।' if lang_code == 'hi' else 
                       'ಧನ್ಯವಾದಗಳು! ಮತ್ತೆ ಕಾಣೋಣ.')
                 st.session_state.listening = False
+
+
+            elif 'send' or 'Email' or 'ಇಮೇಲ್ ಕಳುಹಿಸಿ' or 'ಸಂದೇಶ' or 'ईमेल भेजें' or 'ईमेल' in query:
+                try:
+                    speak("What to send?" if lang_code == 'en' else 
+                  "क्या भेजना है?" if lang_code == 'hi' else "ಏನು ಕಳುಹಿಸಬೇಕು?")
+                    content = takeCommand()
+                    to = "xyzas2238@gmail.com"    
+                    # speak("To whom?")
+                    sendEmail(to, content)
+                    speak("Email has been sent!" if lang_code == 'en' else 
+                  "ईमेल भेज दिया गया है" if lang_code == 'hi' else "ಇಮೇಲ್ ಕಳುಹಿಸಲಾಗಿದೆ")
+                except Exception as e:
+                    speak("What to send?" if lang_code == 'en' else 
+                  "क्षमा मांगना। मैं यह ईमेल भेजने में सक्षम नहीं हूं" if lang_code == 'hi' else "ಏನು ಕಳುಹಿಸಬೇಕು?")
 
             else:
                 speak("I'm really sorry, I didn't catch that. Would you mind trying again, please?" if lang_code == 'en' else 
@@ -206,16 +350,71 @@ def main():
                   "कोई आवाज़ नहीं सुनी। कृपया फिर से प्रयास करें।" if lang_code == 'hi' else 
                   "ಏನೂ ಕೇಳಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.")
         elif query == "Unknown" or query == "अज्ञात" or query == "ಅಜ್ಞಾತ":
-            speak("I couldn’t quite understand that, dear. Can you please repeat it?" if lang_code == 'en' else 
+            speak("I couldn’t quite understand that, Can you please repeat it?" if lang_code == 'en' else 
                   "समझ नहीं पाया। कृपया फिर से प्रयास करें।" if lang_code == 'hi' else 
                   "ಗುರುತಿಸಲಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.")
         else:
-            speak("Oh no! Something went wrong. Let me know how I can be of help, dear." if lang_code == 'en' else 
+            speak("Oh no! Something went wrong. Let me know how I can be of help." if lang_code == 'en' else 
                   "एक त्रुटि हुई। कृपया फिर से प्रयास करें।" if lang_code == 'hi' else 
                   "ದೋಷವೊಂದು ಉಂಟಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.")
-        
-        time.sleep(1.5)
+
+        time.sleep(2.5)
         st.rerun()
 
+def nav():
+    menu = ["Home","Emotion Recognition mode"]
+    choice = st.sidebar.selectbox("Menu", menu)
+    if choice=="Emotion Recognition mode":
+        device = 'cuda' if cv2.cuda.getCudaEnabledDeviceCount() > 0 else 'cpu'
+        er = EmotionRecognition(device=device)
+        cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)  # CAP_DSHOW to reduce latency on Windows
+
+        if not cam.isOpened():
+            print("Error: Cannot access the camera.")
+            exit()
+
+        # Set optimal frame size
+        frame_width, frame_height = 640, 480
+        cam.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
+        cam.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
+
+        frame_counter = 0
+        fps = 0
+
+        while True:
+            start_time = time.time()
+            success, frame = cam.read()
+            if not success:
+                print("Failed to capture frame.")
+                break
+            
+            # Preprocess frame: Grayscale conversion for consistency
+            gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            gray_frame = cv2.cvtColor(gray_frame, cv2.COLOR_GRAY2BGR)  # Convert back to 3-channel for emotion recognition
+
+            # Process every 3rd frame to improve performance if needed
+            if frame_counter % 3 == 0:
+                frame = er.recognise_emotion(gray_frame, return_type='BGR')
+
+            frame_counter += 1
+            # Calculate and display FPS
+            elapsed_time = time.time() - start_time
+            fps = 1.0 / elapsed_time if elapsed_time > 0 else 0
+            cv2.putText(frame, f"FPS: {int(fps)}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+
+
+            # Display the frame
+            cv2.imshow("Emotion Recognition", frame)
+
+            # Press 'Esc' to exit
+            key = cv2.waitKey(1) & 0xFF
+            if key == 27:
+                break
+            
+        # Release resources
+        cam.release()
+        cv2.destroyAllWindows()
+
 if __name__ == "__main__":
+    nav()
     main()
