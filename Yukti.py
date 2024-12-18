@@ -21,14 +21,14 @@ st.markdown(
     """
     <style>
     [data-testid="stSidebar"] {
-        background: linear-gradient(90deg, rgba(0, 36, 61, 1) 0%, rgba(0, 128, 255, 0.9) 50%, rgba(0, 212, 255, 1) 100%);
+        # background: white;
         color: smoke;
         animation: pulse 3s infinite;
         padding: 20px;
     }
     @keyframes pulse {
-        0% { background-color: rgba(0, 128, 255, 0.9); }
-        50% { background-color: rgba(0, 212, 255, 1); }
+        0% { background-color: rgba(0, 128, 255, 0.9); color:green;}
+        50% { background-color: rgba(0, 212, 255, 1); color:blue;}
         100% { background-color: rgba(0, 128, 255, 0.9); }
     }
     .emoji {
@@ -72,15 +72,42 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
 #########################################################################################################################
+st.sidebar.markdown('<div class="yellow-subheader">Features</div>', unsafe_allow_html=True)
 st.sidebar.markdown("""
 - 🏠 **Home**: Chat with Yukti.  
-- 😠😮😐 **Emotion Recognition**: To enable Emotion Recognition mode.  
+- 😠😮😐 **Emotion Recognition**: To Enable Emotion Recognition mode.  
 """)
 # Main page content
 # st.title("Yukti -An AI Assistant 🤖")
 
 # Choose language: 'en' for English, 'kn' for Kannada, 'hi' for Hindi
+st.markdown(
+        """
+        <style>
+        .marquee {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #ff0000;
+            padding: 10px;
+            border-radius: 5px;
+            animation: scroll 10s linear infinite;
+            # animation: glow 1.5s infinite;
+        }
+
+        @keyframes scroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        </style>
+        <div class="marquee">
+            To Communicate with it,Choose any one language.. 
+        </div>
+        """,
+        unsafe_allow_html=True
+        )
 language = st.selectbox("Select Language / भाषा चुनें / ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ:", ["English", "Hindi", "Kannada"])
 
 if language == "Kannada":
@@ -200,7 +227,37 @@ def sendEmail(to, content):
 
 timestamp = datetime.datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
 st.markdown('<div class="yellow-subheader">AI Assistant</div>', unsafe_allow_html=True)
-st.title("Yukti 🤖" if lang_code == 'en' else "युक्ति 🤖" if lang_code == 'hi' else "ಯುಕ್ತಿ 🤖")
+# st.title("Yukti 🤖" if lang_code == 'en' else "युक्ति 🤖" if lang_code == 'hi' else "ಯುಕ್ತಿ 🤖")
+st.markdown(
+    """
+    <style>
+    .yukti-title {
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: left;
+        color: yellow;
+        animation: yukti-glow 2s infinite;
+    }
+
+    @keyframes yukti-glow {
+        0% {
+            text-shadow: 0 0 10px yellow, 0 0 20px yellow, 0 0 30px green;
+        }
+        50% {
+            text-shadow: 0 0 20px green, 0 0 30px yellow, 0 0 40px green;
+        }
+        100% {
+            text-shadow: 0 0 10px green, 0 0 20px green, 0 0 30px yellow;
+        }
+    }
+    </style>
+    <div class="yukti-title">
+        Yukti 🤖
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 st.image("bot.gif")
 
 def main():
@@ -212,7 +269,7 @@ def main():
 
     greeting = wishMe()
     speak(f"{greeting} Hello! How can I make your day better ?" if lang_code == 'en' else 
-          f"{greeting} मैं आपकी किस प्रकार सहायता कर सकता हूँ?" if lang_code == 'hi' else 
+          f"{greeting} मैं आपकी किस प्रकार सहायता कर सकती हूँ?" if lang_code == 'hi' else 
           f"{greeting} ನಾನು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಬಹುದೇ?")
     
     # wishMe()
@@ -337,8 +394,8 @@ def main():
                     speak("Email has been sent!" if lang_code == 'en' else 
                   "ईमेल भेज दिया गया है" if lang_code == 'hi' else "ಇಮೇಲ್ ಕಳುಹಿಸಲಾಗಿದೆ")
                 except Exception as e:
-                    speak("What to send?" if lang_code == 'en' else 
-                  "क्षमा मांगना। मैं यह ईमेल भेजने में सक्षम नहीं हूं" if lang_code == 'hi' else "ಏನು ಕಳುಹಿಸಬೇಕು?")
+                    speak("The api not genereted!" if lang_code == 'en' else 
+                  "क्षमा। मैं यह ईमेल भेजने में सक्षम नहीं हूं" if lang_code == 'hi' else "ದೋಷವೊಂದು ಉಂಟಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ")
 
             else:
                 speak("I'm really sorry, I didn't catch that. Would you mind trying again, please?" if lang_code == 'en' else 
