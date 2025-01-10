@@ -221,8 +221,8 @@ def sendEmail(to, content):
     server = smtplib.SMTP('smtp.gmail.com', 587)
     server.ehlo()
     server.starttls()
-    server.login('skbhagoji97@gmail.com', 'jsoq tvkh ijov iayo')
-    server.sendmail('skbhagoji97@gmail.com', to, content)
+    server.login('email@gmail.com', 'API-Key')
+    server.sendmail('email@gmail.com', to, content)
     server.close()
 
 timestamp = datetime.datetime.now().strftime(f"%Y-%m-%d %H:%M:%S")
@@ -388,7 +388,7 @@ def main():
                     speak("What to send?" if lang_code == 'en' else 
                   "क्या भेजना है?" if lang_code == 'hi' else "ಏನು ಕಳುಹಿಸಬೇಕು?")
                     content = takeCommand()
-                    to = "xyzas2238@gmail.com"    
+                    to = "email@gmail.com"    
                     # speak("To whom?")
                     sendEmail(to, content)
                     speak("Email has been sent!" if lang_code == 'en' else 
